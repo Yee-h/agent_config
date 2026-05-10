@@ -1,0 +1,38 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
+  "mcp": {
+    "context7": {
+      "enabled": true,
+      "headers": {},
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+
+    "sequential-thinking": {
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "time": {
+      "command": [
+        "uvx",
+        "mcp-server-time"
+      ],
+      "enabled": true,
+      "type": "local"
+    }
+  },
+  "provider": {},
+  "plugin": [
+    "@tarquinen/opencode-dcp@latest",
+    "opencode-agent-skills@0.6.5",
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "opencode-snip@latest",
+    "opencode-background-agents@latest"
+  ]
+}
