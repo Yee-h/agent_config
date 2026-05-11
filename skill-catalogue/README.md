@@ -22,7 +22,7 @@
 | [document-processing/office-docs.md](./document-processing/office-docs.md) | 文档处理 | 6 | Word、Excel、PDF、PPT、AI 幻灯片、MarkItDown 格式转换 |
 | [document-processing/academic-writing.md](./document-processing/academic-writing.md) | 学术写作 | 1 | 全流程学术写作：Nature 级润色/图表/数据声明/论文转PPT；翻译、去AI味、Reviewer审视 |
 
-| [discovery/meta-skills.md](./discovery/meta-skills.md) | 元技能 | 5 | Skill 发现、安装、创建与 Superpowers 规范 |
+| [discovery/meta-skills.md](./discovery/meta-skills.md) | 元技能 | 4 | Skill 发现、安装、创建与 Superpowers 规范 |
 
 ---
 
@@ -57,5 +57,3 @@
 | **researcher** | `Task(subagent_type="researcher")` | 搜索调研/研究 |
 
 ---
-
-> 本目录由 `install-skill` 流程自动维护。新增/删除 Skill 后请同步更新此目录。
