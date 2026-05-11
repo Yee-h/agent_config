@@ -1,6 +1,6 @@
 ---
 name: install-skill
-description: Safe skill installation process with poison checking, license cleanup, and catalogue updates. Supports OpenCode, Claude Code, Cursor, Windsurf, CodeBuddy, and other AI coding agents.
+description: Safe skill installation process with poison checking, license cleanup, and cross-agent path correction. Supports OpenCode, Claude Code, Cursor, Windsurf, CodeBuddy, and other AI coding agents. Use when the user asks to install, add, download, or import a skill. Use when running npm install, npx skills add, uipro init, openspec init, or any CLI command that downloads or generates skill files. Use whenever skill files are being copied into a skills directory — regardless of the installation method.
 ---
 
 # Install Skill — Safe Skill Installation Guide
@@ -15,13 +15,13 @@ This skill defines the mandatory safety process for installing any new skill. It
 
 **Before any installation step, determine which agent you are running as.** This is stated in your system prompt (e.g., "You are OpenCode", "You are Claude Code"). Use the table below to look up the correct paths:
 
-| Agent | Skills Path (`<SKILLS_PATH>`) | Config Path (`<CONFIG_PATH>`) | Catalogue Path |
-|---|---|---|---|
-| **OpenCode** | `~/.config/opencode/skills/` | `~/.config/opencode/` | `~/.config/opencode/skill-catalogue/` |
-| **Claude Code** | `~/.claude/skills/` | `~/.claude/` | N/A (see Rule 3) |
-| **Cursor** | `~/.cursor/skills/` | `~/.cursor/` | N/A (see Rule 3) |
-| **Windsurf** | `~/.windsurf/skills/` | `~/.windsurf/` | N/A (see Rule 3) |
-| **CodeBuddy** | `~/.codebuddy/skills/` | `~/.codebuddy/` | N/A (see Rule 3) |
+| Agent | Skills Path (`<SKILLS_PATH>`) | Config Path (`<CONFIG_PATH>`) |
+|---|---|---|
+| **OpenCode** | `~/.config/opencode/skills/` | `~/.config/opencode/` |
+| **Claude Code** | `~/.claude/skills/` | `~/.claude/` |
+| **Cursor** | `~/.cursor/skills/` | `~/.cursor/` |
+| **Windsurf** | `~/.windsurf/skills/` | `~/.windsurf/` |
+| **CodeBuddy** | `~/.codebuddy/skills/` | `~/.codebuddy/` |
 
 If the agent you are running is not listed above, infer the path convention: most agents follow the pattern `~/.<agent-name>/skills/` with config at `~/.<agent-name>/`. The `~/.agents/` directory (created by `npx skills --global`) is a **shared download staging area** and is NOT an agent-specific directory — skills must be moved from there to the correct agent directory.
 
@@ -52,32 +52,41 @@ After the poison check passes, before finalizing installation, you MUST delete a
 
 **Rationale**: License files are not functional skill content and add unnecessary noise to the skills directory.
 
-### Rule 3: Update Skill Registry After Every Install or Modification
+### Rule 3: Determine Installation Scope (Project-Local vs Global)
 
-After a skill is successfully installed or modified, you MUST update the agent's skill registry to ensure the skill can be discovered and invoked at the right time.
+Some skills are installed via CLI tools (`uipro init`, `openspec init`, etc.) that generate files in project-local agent directories (`.opencode/skills/`, `.claude/skills/`, `.codex/skills/`, `.cursor/`). Others land directly in global config (`~/.config/opencode/skills/`). You MUST determine the correct installation scope for each skill.
 
-**OpenCode**: Update the skill-catalogue under `<CONFIG_PATH>skill-catalogue/`:
-1. Locate the correct category file. Choose the category file that best matches the skill's domain:
-   - `discovery/meta-skills.md` — skill management, discovery, AI agent workflows
-   - `development/front-end.md` — React, Vue, Next.js, UI/UX
-   - `development/back-end.md` — APIs, databases, auth
-   - `development/full-stack.md` — scaffolding, PRD, requirements
-   - `testing/unit-testing.md` — TDD, unit/integration tests
-   - `testing/e2e-testing.md` — Playwright, browser automation
-   - `agent-workflow/planning.md` — task decomposition, long-running agents
-   - `agent-workflow/review-and-debug.md` — code review, debugging
-   - `agent-workflow/subagent-tools.md` — code-reviewer, code-simplifier, doc-writer
-   - `agent-workflow/git-workflow.md` — git, branching, worktrees
-   - `document-processing/office-docs.md` — Word, Excel, PDF, PPT
-   - `operations/` — CI/CD, containers
-2. Add or update the skill's row in the table using this format:
-   ```
-   | **<skill-name>** | `Skill(name="<skill-name>")` | <触发条件与适用场景，中文描述> |
-   ```
-3. If the skill is removed, delete its row from the catalogue.
-4. If no existing category fits, create a new `.md` file in the appropriate subdirectory and add an entry to `skill-catalogue/README.md`'s table.
+**Detection**: After the skill is downloaded or generated, check whether its files landed in a project-local directory or the global config directory. Also check whether a version of this skill already exists at the global path.
 
-**Other agents**: Consult the agent's documentation for how skills are registered or discovered. Many agents (Claude Code, Cursor, Windsurf, CodeBuddy) discover skills automatically from the skills directory and do not require a catalogue. If the agent has no explicit skill registration mechanism, skip this step.
+**Decision flow:**
+
+```
+Skill generated at project-local path (.opencode/skills/<name>/)?
+  │
+  ├── NO → Already in global config, proceed to next rule
+  │
+  └── YES → Check global path (~/.config/opencode/skills/<name>/)
+            │
+            ├── NOT EXISTS → Ask user:
+            │     "This skill was installed to the project-local directory.
+            │      Install globally so it's available across all projects,
+            │      or keep local for this project only?"
+            │     → Global: move to ~/.config/opencode/skills/<name>/
+            │     → Local:  leave in place, skip migration
+            │
+            ├── EXISTS, same or newer version → Skip migration
+            │     (global version is sufficient, keep project-local as fallback)
+            │
+            └── EXISTS, older version → Ask user:
+                  "A newer version of this skill was just downloaded. Update
+                   the global version, or keep both?"
+                  → Update: replace global with new version
+                  → Keep both: leave project-local, keep global as-is
+```
+
+**Multi-agent generation**: Some CLI tools generate skills for multiple agents simultaneously (e.g., both `.opencode/skills/` and `.claude/skills/`). Delete directories for agents other than the **current agent** — they are not relevant.
+
+**Rationale**: Not all skills should be global — project-specific skills (e.g., codebase-specific conventions) should stay local. Overwriting a newer global version with an older download causes regressions. Always confirm the user's intent before moving.
 
 ### Rule 4: Skills Must Be Written in English or Chinese Only
 
@@ -184,9 +193,13 @@ After all checks pass, verify that the skill package includes a `SKILL.md` file.
    ├── Search for all known agent directory patterns listed in Rule 6 Step 2
    └── Replace with current agent's equivalent paths (Rule 6 Step 3)
 7. DELETE license files (Rule 2)
-8. Move SKILL.md to <SKILLS_PATH><target>/
-9. DELETE ~/.agents/ (Rule 5)
-10. UPDATE skill registry — catalogue (OpenCode) or skip (other agents) per Rule 3
+8. SCOPE DECISION — determine project-local vs global installation (Rule 3)
+   ├── Skill in project-local dir → Check if global version exists
+   ├── Global missing or older → Ask user: global or keep local?
+   ├── Global same or newer → Skip migration
+   └── Already in global config → Skip
+9. Move remaining files to <SKILLS_PATH><target>/
+10. DELETE ~/.agents/ (Rule 5)
 11. Confirm the skill appears in the available skills list
 ```
 
@@ -202,7 +215,6 @@ For bulk updates from the skills.sh registry, use the provided scripts:
 4. Move skills: .\scripts\move-agents-to-skills.ps1 -SkillsDir "<SKILLS_PATH>"
    (omit -SkillsDir to default to OpenCode)
 5. .\scripts\cleanup-agents.ps1                  # delete ~/.agents/
-6. UPDATE skill registry per Rule 3
 ```
 
 **Script locations (relative to this SKILL.md):**
@@ -227,7 +239,9 @@ Both move scripts use convention-based routing: `obra-superpowers-<name>` → `s
 ## Trigger
 
 Use this skill whenever:
-- The user asks to install, add, or import a new skill
-- You are about to copy skill files into the skills directory
+- The user asks to install, add, download, or import a new skill
+- The user runs `npm install -g <skill-cli>` or any npm installation of skill-related packages
+- The user runs `uipro init`, `openspec init`, `npx skills add`, or any CLI command that downloads or generates skill files
+- You are about to copy or generate skill files into any skills directory
 - A skill update is being applied (treat as a fresh install)
-- A skill has been created or modified (for the registry update step)
+- A skill has been created or modified locally
