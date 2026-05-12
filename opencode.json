@@ -31,7 +31,7 @@
   "provider": {},
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
-    "opencode-agent-skills@latest",
+    "opencode-agent-skills@0.7.0",
     "superpowers@git+https://github.com/obra/superpowers.git#v5.1.0",
     "opencode-background-agents@latest"
   ]
