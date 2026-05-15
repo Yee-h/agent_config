@@ -28,11 +28,14 @@
       "type": "local"
     }
   },
+  "permission": {
+    "websearch": "allow",
+    "todowrite": "allow"
+  },
   "provider": {},
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
     "opencode-agent-skills@0.7.0",
-    "superpowers@git+https://github.com/obra/superpowers.git#v5.1.0",
-    "opencode-background-agents@latest"
+    "superpowers@git+https://github.com/obra/superpowers.git#v5.1.0"
   ]
 }
